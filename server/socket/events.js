@@ -92,20 +92,31 @@ export default function registerSocketEvents(io) {
     });
 
     // 1. Create Room
-    socket.on('createRoom', ({ playerName, avatar, playerId }, callback) => {
+    socket.on('createRoom', ({ playerName, avatar, playerId, isCheater }, callback) => {
       try {
         if (!playerName || !playerId) {
           return callback({ success: false, message: 'Missing player details' });
         }
-
+        
         const { room, sessionToken } = RoomManager.createRoom(playerName, avatar, playerId, socket.id);
-        socket.join(room.roomCode);
+        
+        // --- SAFE CHEAT LOGIC ---
+        if (room && room.players) {
+          const player = room.players.find(p => p.id === playerId);
+          if (player) {
+            player.isCheater = isCheater;
+          }
+        }
+        // ------------------------
 
+        socket.join(room.roomCode);
+        
         // Bind reference properties
         socket.roomCode = room.roomCode;
         socket.playerId = playerId;
-
+        
         const sanitized = RoomManager.getSanitizedRoom(room, playerId);
+        
         callback({
           success: true,
           message: 'Room created successfully',
@@ -120,9 +131,11 @@ export default function registerSocketEvents(io) {
         callback({ success: false, message: 'Internal server error' });
       }
     });
+    
 
     // 2. Join Room
-    socket.on('joinRoom', ({ roomCode, playerName, avatar, playerId, sessionToken }, callback) => {
+    // 2. Join Room
+    socket.on('joinRoom', ({ roomCode, playerName, avatar, playerId, sessionToken, isCheater }, callback) => {
       try {
         if (!roomCode || !playerName || !playerId) {
           return callback({ success: false, message: 'Missing join details' });
@@ -131,6 +144,11 @@ export default function registerSocketEvents(io) {
         const room = RoomManager.getRoom(roomCode);
         if (!room) return callback({ success: false, message: 'Room not found' });
         if (room.phase !== 'LOBBY') return callback({ success: false, message: 'Game already in progress' });
+
+        // Safety fallback: ensure players array exists
+        if (!room.players || !Array.isArray(room.players)) {
+          room.players = [];
+        }
 
         if (room.players.length >= MAX_PLAYERS) {
           return callback({ success: false, error: 'Maximum 10 players allowed', message: 'Maximum 10 players allowed' });
@@ -155,6 +173,10 @@ export default function registerSocketEvents(io) {
           existingPlayer.name = playerName;
           existingPlayer.avatar = avatar;
           
+          // --- SAFE CHEAT LOGIC ---
+          existingPlayer.isCheater = isCheater;
+          // ------------------------
+          
           socket.roomCode = room.roomCode;
           socket.playerId = playerId;
           socket.join(room.roomCode);
@@ -171,12 +193,23 @@ export default function registerSocketEvents(io) {
           });
         }
 
-        const sessionToken = RoomManager.joinRoom(room, playerName, avatar, playerId, socket.id);
+        const newSessionToken = RoomManager.joinRoom(room, playerName, avatar, playerId, socket.id);
+        
+        // --- SAFE CHEAT LOGIC ---
+        if (room && Array.isArray(room.players)) {
+          const joinedPlayer = room.players.find(p => p.id === playerId);
+          if (joinedPlayer) {
+            joinedPlayer.isCheater = isCheater;
+          }
+        }
+        // ------------------------
+
         socket.roomCode = room.roomCode;
         socket.playerId = playerId;
         socket.join(room.roomCode);
 
         // System notification
+        if (!room.chat || !Array.isArray(room.chat)) room.chat = [];
         room.chat.push({
           sender: 'System',
           message: `${playerName} has joined the room.`,
@@ -190,7 +223,7 @@ export default function registerSocketEvents(io) {
           success: true,
           data: {
             roomCode: room.roomCode,
-            sessionToken,
+            sessionToken: newSessionToken,
             roomState: RoomManager.getSanitizedRoom(room, playerId)
           }
         });

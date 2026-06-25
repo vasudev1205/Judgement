@@ -22,6 +22,9 @@ function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
 
+  const [cheatClicks, setCheatClicks] = useState(0);
+  const { cheatActive, toggleCheat } = useGameStore();
+
   // Settings for Offline Launch
   const [offlineBots, setOfflineBots] = useState(3);
   const [scoreMode, setScoreMode] = useState('MODE1');
@@ -38,6 +41,18 @@ function Dashboard() {
       setShowProfileModal(false);
     }
   };
+
+  const handleSecretClick = () => {
+    const newClicks = cheatClicks + 1;
+    setCheatClicks(newClicks);
+    if (newClicks >= 5) {
+      toggleCheat();
+      setCheatClicks(0);
+      alert(cheatActive ? "God Mode DISABLED" : "God Mode ENABLED. You will draw perfect trumps.");
+    }
+  };
+
+
 
   const calculateSuccessRate = () => {
     if (stats.gamesPlayed === 0) return 0;
@@ -86,7 +101,13 @@ function Dashboard() {
           <section className="glass-panel p-8 rounded-3xl relative">
             <div className="absolute top-4 right-4 text-purple-500/20"><Sparkles className="w-24 h-24" /></div>
             
-            <h1 className="text-4xl font-black text-white mb-6 uppercase tracking-wider glow-text-purple">KACHUFUL</h1>
+            {/* Add onClick here */}
+  <h1 
+    onClick={handleSecretClick} 
+    className="text-4xl font-black text-white mb-6 uppercase tracking-wider glow-text-purple select-none cursor-default"
+  >
+    KACHUFUL
+  </h1>
             <p className="text-slate-300 text-sm leading-relaxed mb-8">
               A trick-taking card game of forecasting and judgement. Place your bid correctly in each round to score points. If you score exactly what you guessed, you win!
             </p>

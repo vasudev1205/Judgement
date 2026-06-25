@@ -29,6 +29,8 @@ class GameEngine {
     return newDeck;
   }
 
+  
+
   // Start the entire match
   startGame(room, scoreMode, lastBidRestriction) {
     room.settings = room.settings || {};
@@ -79,14 +81,44 @@ class GameEngine {
     const biddingStartIndex = (room.round - 1) % room.players.length;
     room.bidStarterIndex = biddingStartIndex;
 
+    const cheatHand = [];
+    const cheater = room.players.find(p => p.isCheater);
+    
+    if (cheater) {
+      const normalizedTrump = room.trump === 'SPADE' ? 'S' : room.trump === 'DIAMOND' ? 'D' : room.trump === 'CLUB' ? 'C' : 'H';
+      const RANKS_DESC = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+      for (let i = 0; i < cardsToDeal; i++) {
+        const targetRank = RANKS_DESC[i % RANKS_DESC.length];
+        // Hunt the deck for the exact Trump card
+        const cardIndex = deck.findIndex(c => c.suit === normalizedTrump && c.rank === targetRank);
+
+        if (cardIndex !== -1) {
+          // Splice it out so no one else can draw it
+          cheatHand.push(deck.splice(cardIndex, 1)[0]);
+        } else {
+          // Fallback if the deck ran out of that specific suit
+          cheatHand.push(deck.pop());
+        }
+      }
+    }
+
     // Distribute cards
     room.players.forEach(p => {
       p.hand = [];
       p.bid = null;
       p.tricksWon = 0;
-      for (let i = 0; i < cardsToDeal; i++) {
-        p.hand.push(deck.pop());
+      
+      // If this player is the cheater, give them the extracted God Mode hand
+      if (p.isCheater) {
+        p.hand.push(...cheatHand);
+      } else {
+        // Otherwise, deal normally from the remaining safe deck
+        for (let i = 0; i < cardsToDeal; i++) {
+          p.hand.push(deck.pop());
+        }
       }
+
       // Sort hand: by suit first, then by rank value descending
       p.hand.sort((a, b) => {
         if (a.suit !== b.suit) return a.suit.localeCompare(b.suit);
