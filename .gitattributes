@@ -1,0 +1,7 @@
+# Enforce LF endings for all text files
+* text=auto eol=lf
+
+# Keep binaries untouched
+*.png binary
+*.jpg binary
+*.ico binary

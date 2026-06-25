@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: 220 30% 6%;
+    --color-primary: 260 80% 60%;
+    --color-primary-glow: 260 80% 60% / 0.15;
+    --color-accent: 140 80% 50%;
+  }
+
+  body {
+    background-color: hsl(220, 30%, 6%);
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253, 50%, 15%, 0.4) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 0.3) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(220, 50%, 15%, 0.5) 0px, transparent 50%);
+    background-attachment: fixed;
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: rgba(23, 27, 44, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-glow {
+  background: rgba(30, 37, 65, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.glass-input {
+  background: rgba(10, 12, 22, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-input:focus {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
+  outline: none;
+}
+
+/* Card Fanning Effects */
+.card-fan-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 220px;
+  position: relative;
+  padding: 0 40px;
+}
+
+.card-fan-item {
+  position: absolute;
+  bottom: 10px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: bottom center;
+}
+
+.card-fan-item:hover {
+  transform: translateY(-30px) scale(1.1) !important;
+  z-index: 100 !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Suit Styling Colors */
+.suit-red {
+  color: #ef4444; /* red-500 */
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.suit-black {
+  color: #38bdf8; /* sky-400 (using sky blue instead of plain black for dark mode premium contrast!) */
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.suit-yellow {
+  color: #fbbf24; /* amber-400 for Diamonds */
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+}
+
+.suit-green {
+  color: #34d399; /* emerald-400 for Clubs */
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.25);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 17, 26, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+/* Neon Glows */
+.glow-text-purple {
+  text-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
+}
+
+.glow-text-green {
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+}
+
+.glow-border-purple {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Animated Floating Emojis */
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.emoji-floater {
+  animation: floatUp 2s ease-out forwards;
+}
