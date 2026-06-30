@@ -22,9 +22,6 @@ function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  const [cheatClicks, setCheatClicks] = useState(0);
-  const { cheatActive, toggleCheat } = useGameStore();
-
   // Settings for Offline Launch
   const [offlineBots, setOfflineBots] = useState(3);
   const [scoreMode, setScoreMode] = useState('MODE1');
@@ -34,13 +31,8 @@ function Dashboard() {
   const maxPossibleOfflineRounds = Math.floor(52 / (1 + offlineBots));
   const currentOfflineMaxRounds = Math.min(offlineMaxRounds, maxPossibleOfflineRounds);
 
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    if (editName.trim()) {
-      saveProfile(editName.trim(), selectedAvatar);
-      setShowProfileModal(false);
-    }
-  };
+  const [cheatClicks, setCheatClicks] = useState(0);
+  const { cheatActive, toggleCheat } = useGameStore();
 
   const handleSecretClick = () => {
     const newClicks = cheatClicks + 1;
@@ -48,11 +40,18 @@ function Dashboard() {
     if (newClicks >= 5) {
       toggleCheat();
       setCheatClicks(0);
-      alert(cheatActive ? "God Mode DISABLED" : "God Mode ENABLED. You will draw perfect trumps.");
+      // Optional: Remove this alert later if you want it to be completely silent
+      alert(cheatActive ? "God Mode DISABLED" : "God Mode ENABLED.");
     }
   };
 
-
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    if (editName.trim()) {
+      saveProfile(editName.trim(), selectedAvatar);
+      setShowProfileModal(false);
+    }
+  };
 
   const calculateSuccessRate = () => {
     if (stats.gamesPlayed === 0) return 0;
@@ -102,12 +101,9 @@ function Dashboard() {
             <div className="absolute top-4 right-4 text-purple-500/20"><Sparkles className="w-24 h-24" /></div>
             
             {/* Add onClick here */}
-  <h1 
-    onClick={handleSecretClick} 
-    className="text-4xl font-black text-white mb-6 uppercase tracking-wider glow-text-purple select-none cursor-default"
-  >
-    KACHUFUL
-  </h1>
+              <h1 onClick={handleSecretClick} className="text-4xl font-black text-white mb-6 uppercase tracking-wider glow-text-purple select-none cursor-default">
+                KACHUFUL
+              </h1>
             <p className="text-slate-300 text-sm leading-relaxed mb-8">
               A trick-taking card game of forecasting and judgement. Place your bid correctly in each round to score points. If you score exactly what you guessed, you win!
             </p>
@@ -207,16 +203,28 @@ function Dashboard() {
                         maxLength={3}
                         className="flex-1 glass-input py-2.5 px-3 rounded-xl uppercase font-bold tracking-wider text-center text-sm"
                       />
-                      <button
-                        onClick={() => {
-                          if (joinCode.length === 3) onlineJoinRoom(joinCode);
-                          else alert('Enter a valid 3-letter code.');
-                        }}
-                        disabled={isConnecting}
-                        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 rounded-xl font-bold text-xs"
-                      >
-                        JOIN
-                      </button>
+                      <div className="flex flex-col gap-1.5 w-24">
+                        <button
+                          onClick={() => {
+                            if (joinCode.length === 3) onlineJoinRoom(joinCode);
+                            else alert('Enter a valid 3-letter code.');
+                          }}
+                          disabled={isConnecting}
+                          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-1.5 rounded-lg font-bold text-xs"
+                        >
+                          JOIN
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (joinCode.length === 3) onlineJoinRoom(joinCode, true); // true = asSpectator
+                            else alert('Enter a valid 3-letter code.');
+                          }}
+                          disabled={isConnecting}
+                          className="bg-slate-700 hover:bg-slate-600 border border-slate-500/50 disabled:opacity-50 text-slate-200 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider"
+                        >
+                          Spectate
+                        </button>
+                      </div>
                     </div>
                     
                     <button
@@ -275,7 +283,7 @@ function Dashboard() {
               <li>Cards dealt equal the round number (e.g. 1 card in Round 1).</li>
               <li>At the start of the round, you forecast (bid) how many tricks you'll win.</li>
               <li><strong>Last Bid restriction:</strong> The dealer cannot bid a number making total bids equal to total tricks of the round.</li>
-              <li>Trump suit beats all standard suits. Trump suit rotates: ♠ &rarr; ♥ &rarr; ♣ &rarr; ♦ &rarr; ♠.</li>
+              <li>Trump suit beats all standard suits. A new trump suit is chosen randomly at the start of each round.</li>
               <li>If no trumps are played, the first card's suit acts as trump for that trick. Highest card of leading suit wins.</li>
               <li>If you make your forecast exactly, you score. Otherwise, you score 0.</li>
             </ul>

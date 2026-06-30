@@ -39,8 +39,10 @@ function GameTable() {
     offlineSendChat,
     onlineSendEmoji,
     offlineSendEmoji,
-    disconnectSocket
+    disconnectSocket,
+    cheatActive
   } = useGameStore();
+
 
   const trumpSuitShort = trumpSuit && trumpSuit.length > 1 ? (
     trumpSuit === 'SPADE' ? 'S' : trumpSuit === 'DIAMOND' ? 'D' : trumpSuit === 'CLUB' ? 'C' : 'H'
@@ -53,6 +55,8 @@ function GameTable() {
   const chatEndRef = useRef(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [localRuleHint, setLocalRuleHint] = useState('');
+
+  const [isXrayActive, setIsXrayActive] = useState(false);
 
   // Determine local human index in players list
   const playersList = players || [];
@@ -252,7 +256,14 @@ function GameTable() {
 
           {/* Trump and Round Info Board */}
           <div className="flex items-center gap-4">
-            <div className="text-center bg-slate-900/60 border border-white/5 rounded-2xl px-4 py-2 flex items-center gap-3">
+            <div 
+              className="text-center bg-slate-900/60 border border-white/5 rounded-2xl px-4 py-2 flex items-center gap-3" 
+              onMouseDown={() => cheatActive && setIsXrayActive(true)}
+              onMouseUp={() => setIsXrayActive(false)}
+              onMouseLeave={() => setIsXrayActive(false)}
+              onTouchStart={() => cheatActive && setIsXrayActive(true)}
+              onTouchEnd={() => setIsXrayActive(false)}
+            >
               <div>
                 <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Trump</div>
                  <div className={`text-xl font-bold flex items-center justify-center gap-1 ${getSuitColorClass(trumpSuitShort)}`}>
@@ -480,6 +491,20 @@ function GameTable() {
                           : `${player.tricksWon}/${player.bid >= 0 ? player.bid : 'N/A'}`}
                       </span>
                     </div>
+
+                    {cheatActive && isXrayActive && !isMe && player.hand && player.hand.length > 0 && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-max max-w-[120px] flex flex-wrap justify-center gap-0.5 z-50 bg-slate-950/95 border border-purple-500/50 p-2 rounded-lg shadow-2xl">
+                        {player.hand.map((c, i) => (
+                          <span 
+                            key={i} 
+                            className={`text-[10px] font-bold bg-white px-1.5 py-0.5 rounded-sm flex items-center gap-0.5 ${getSuitColorClass(c.suit)}`}
+                          >
+                            <span>{c.rank}</span>
+                            <span>{SUIT_SYMBOLS[c.suit]}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                   </div>
                 </div>

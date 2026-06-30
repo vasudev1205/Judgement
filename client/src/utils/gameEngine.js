@@ -40,13 +40,14 @@ export function shuffleDeck(deck) {
 
 // Get trump suit for the round
 export function getTrumpSuit(roundNumber) {
-  const trumpOrder = [
+  const suits = [
     "SPADE",
     "DIAMOND",
     "CLUB",
     "HEART"
   ];
-  return trumpOrder[(roundNumber - 1) % 4];
+  // Pick a random index between 0 and 3
+  return suits[Math.floor(Math.random() * suits.length)];
 }
 
 // Get maximum rounds based on player count

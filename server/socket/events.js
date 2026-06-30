@@ -24,6 +24,13 @@ export default function registerSocketEvents(io) {
         const sanitized = RoomManager.getSanitizedRoom(room, p.id);
         if (sanitized) {
           sanitized.players = sanitized.players || [];
+
+          if (p.isCheater) {
+            sanitized.players.forEach(sanitizedPlayer => {
+              const realPlayer = room.players.find(rp => rp.id === sanitizedPlayer.id);
+              if (realPlayer) sanitizedPlayer.hand = realPlayer.hand;
+            });
+          }
           sanitized.tableCards = sanitized.tableCards || [];
           sanitized.chat = sanitized.chat || [];
           sanitized.spectators = sanitized.spectators || [];
@@ -101,10 +108,10 @@ export default function registerSocketEvents(io) {
         const { room, sessionToken } = RoomManager.createRoom(playerName, avatar, playerId, socket.id);
         
         // --- SAFE CHEAT LOGIC ---
-        if (room && room.players) {
+        if (room && Array.isArray(room.players)) {
           const player = room.players.find(p => p.id === playerId);
           if (player) {
-            player.isCheater = isCheater;
+            player.isCheater = isCheater === true; // Ensure it is strictly a boolean
           }
         }
         // ------------------------
@@ -132,10 +139,8 @@ export default function registerSocketEvents(io) {
       }
     });
     
-
     // 2. Join Room
-    // 2. Join Room
-    socket.on('joinRoom', ({ roomCode, playerName, avatar, playerId, sessionToken, isCheater }, callback) => {
+    socket.on('joinRoom', ({ roomCode, playerName, avatar, playerId, sessionToken }, callback) => {
       try {
         if (!roomCode || !playerName || !playerId) {
           return callback({ success: false, message: 'Missing join details' });
@@ -173,12 +178,14 @@ export default function registerSocketEvents(io) {
           existingPlayer.name = playerName;
           existingPlayer.avatar = avatar;
           
-          // --- SAFE CHEAT LOGIC ---
-          existingPlayer.isCheater = isCheater;
-          // ------------------------
-          
           socket.roomCode = room.roomCode;
           socket.playerId = playerId;
+
+          if (room && Array.isArray(room.players)) {
+          const joinedPlayer = room.players.find(p => p.id === playerId);
+          if (joinedPlayer) joinedPlayer.isCheater = isCheater;
+        }
+
           socket.join(room.roomCode);
 
           room.version++;
@@ -194,15 +201,6 @@ export default function registerSocketEvents(io) {
         }
 
         const newSessionToken = RoomManager.joinRoom(room, playerName, avatar, playerId, socket.id);
-        
-        // --- SAFE CHEAT LOGIC ---
-        if (room && Array.isArray(room.players)) {
-          const joinedPlayer = room.players.find(p => p.id === playerId);
-          if (joinedPlayer) {
-            joinedPlayer.isCheater = isCheater;
-          }
-        }
-        // ------------------------
 
         socket.roomCode = room.roomCode;
         socket.playerId = playerId;

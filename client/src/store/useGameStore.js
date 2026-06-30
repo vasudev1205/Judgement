@@ -43,6 +43,8 @@ export const useGameStore = create((set, get) => ({
   error: null,
   trickWinnerToast: null,
   emojiReactions: [],
+
+  // App State
   cheatActive: localStorage.getItem('kachuful_godmode') === 'true',
   toggleCheat: () => {
     const current = get().cheatActive;
@@ -169,11 +171,18 @@ export const useGameStore = create((set, get) => ({
   // ONLINE EVENT EMITTERS
   // ----------------------------------------------------
   onlineCreateRoom: () => {
-    const { playerName, playerAvatar, playerId } = get();
+    // Safely pull cheatActive from the store
+    const { playerName, playerAvatar, playerId, cheatActive } = get();
     useGameStore.setState({ error: null, isConnecting: true });
 
     socket.connect();
-    socket.emit('createRoom', { playerName, avatar: playerAvatar, playerId, isCheater: get().cheatActive }, (res) => {
+    // Send isCheater flag to the backend
+    socket.emit('createRoom', { 
+      playerName, 
+      avatar: playerAvatar, 
+      playerId, 
+      isCheater: cheatActive || false // Fallback to false just in case
+    }, (res) => {
       set({ isConnecting: false });
       if (res.success) {
         localStorage.setItem('kachuful_room_code', res.data.roomCode);
@@ -436,36 +445,30 @@ export const useGameStore = create((set, get) => ({
     const deck = shuffleDeck(createDeck());
     const trump = getTrumpSuit(round);
 
-    // --- CHEAT ENGINE: Steal the best trump cards from the deck ---
+    // --- SOFT CHEAT: Steal ONE top card ---
     let myCheatHand = [];
     if (cheatActive) {
       const normalizedTrump = trump === 'SPADE' ? 'S' : trump === 'DIAMOND' ? 'D' : trump === 'CLUB' ? 'C' : 'H';
-      const RANKS = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
-      
-      for (let i = 0; i < round; i++) {
-        const targetRank = RANKS[i % RANKS.length];
-        // Find the exact card in the shuffled deck
-        const cardIndex = deck.findIndex(c => c.suit === normalizedTrump && c.rank === targetRank);
-        
+      const targetRanks = ['A', 'K', 'Q', 'J']; // Look for the highest available
+      for (let rank of targetRanks) {
+        const cardIndex = deck.findIndex(c => c.suit === normalizedTrump && c.rank === rank);
         if (cardIndex !== -1) {
-          // Remove it from the deck and add it to the cheat hand
           myCheatHand.push(deck.splice(cardIndex, 1)[0]);
-        } else {
-          // Fallback if deck runs out (e.g., round > 13)
-          myCheatHand.push(deck.pop());
+          break; // Stop after stealing just 1 card!
         }
       }
     }
-    // -------------------------------------------------------------
+    // --------------------------------------
 
     const updatedPlayers = players.map(p => {
       const hand = [];
       
-      // If cheat is active and this is the human player, give them the stolen cards
       if (cheatActive && p.id === playerId) {
         hand.push(...myCheatHand);
+        for (let i = 0; i < round - myCheatHand.length; i++) {
+          hand.push(deck.pop());
+        }
       } else {
-        // Otherwise, deal normally from the remaining deck
         for (let i = 0; i < round; i++) {
           hand.push(deck.pop());
         }
@@ -476,23 +479,13 @@ export const useGameStore = create((set, get) => ({
         return b.value - a.value;
       });
 
-      return {
-        ...p,
-        hand,
-        bid: null,
-        tricksWon: 0
-      };
+      return { ...p, hand, bid: null, tricksWon: 0 };
     });
 
     const firstBidderIndex = (round - 1) % updatedPlayers.length;
     set({
-      players: updatedPlayers,
-      trump,
-      trumpSuit: trump,
-      tableCards: [],
-      playedCards: [],
-      lastTrickWinner: null,
-      turn: updatedPlayers[firstBidderIndex].id,
+      players: updatedPlayers, trump, trumpSuit: trump, tableCards: [],
+      playedCards: [], lastTrickWinner: null, turn: updatedPlayers[firstBidderIndex].id,
       activeTurnIndex: firstBidderIndex
     });
 
